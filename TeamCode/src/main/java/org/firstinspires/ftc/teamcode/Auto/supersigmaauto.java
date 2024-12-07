@@ -34,6 +34,25 @@ public class supersigmaauto extends LinearOpMode {
     private DcMotor bl = null;
     private DcMotor br = null;
 
+    DcMotor uppiesL;
+
+    DcMotor uppiesR;
+
+    CRServo spinnyL;
+
+    CRServo spinnyR;
+
+    Servo inL;
+    Servo inR;
+
+    Servo linkL;
+    Servo linkR;
+
+    Servo clawL;
+    Servo clawR;
+
+    Servo uppiesJointL;
+    Servo uppiesJointR;
 
 
     private IMU imu = null;
@@ -98,6 +117,27 @@ public class supersigmaauto extends LinearOpMode {
         br = hardwareMap.get(DcMotor.class, "bR");
         fl = hardwareMap.get(DcMotor.class, "fL");
 
+        uppiesL = hardwareMap.dcMotor.get("uppiesL");
+        uppiesR = hardwareMap.dcMotor.get("uppiesR");
+
+        spinnyL = hardwareMap.crservo.get("spinnyL");
+        spinnyR = hardwareMap.crservo.get("spinnyR");
+
+
+        inL = hardwareMap.servo.get("inL");
+        inR = hardwareMap.servo.get("inR");
+
+        linkL = hardwareMap.servo.get("linkL");
+        linkR = hardwareMap.servo.get("linkR");
+
+        clawL = hardwareMap.servo.get("clawL");
+        clawR = hardwareMap.servo.get("clawR");
+
+        uppiesJointL = hardwareMap.servo.get("uppiesJointL");
+        uppiesJointR = hardwareMap.servo.get("uppiesJointR");
+
+
+
         br.setDirection(DcMotor.Direction.REVERSE);
         fr.setDirection(DcMotor.Direction.REVERSE);
         fl.setDirection(DcMotor.Direction.FORWARD);
@@ -105,7 +145,43 @@ public class supersigmaauto extends LinearOpMode {
 
 
 
+        inL.setDirection(Servo.Direction.REVERSE);
+        linkL.setDirection(Servo.Direction.REVERSE);
 
+
+        spinnyR.setDirection(CRServo.Direction.REVERSE);
+
+        uppiesJointR.setDirection(Servo.Direction.REVERSE);
+
+        clawR.setDirection(Servo.Direction.REVERSE);
+
+        uppiesL.setDirection(DcMotorSimple.Direction.REVERSE);
+        uppiesR.setDirection(DcMotorSimple.Direction.REVERSE);
+
+
+
+
+
+
+
+        uppiesL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        uppiesR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+
+        uppiesL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        uppiesR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        uppiesJointL.setPosition(0.7);
+        uppiesJointR.setPosition(0.7);
+
+        clawL.setPosition(0.4);
+        clawR.setPosition(0.4);
+
+        linkL.setPosition(0.82);
+        linkR.setPosition(0.8);
+
+        inL.setPosition(0.85);
+        inR.setPosition(0.85);
 
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.DOWN;
         RevHubOrientationOnRobot.UsbFacingDirection  usbDirection  = RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
@@ -139,13 +215,34 @@ public class supersigmaauto extends LinearOpMode {
         br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        uppiesL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        uppiesR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        while (opModeInInit()) {
+            telemetry.addData(">", "Robot Heading = %4.0f", getHeading());
+            telemetry.update();
+        }
 
+        waitForStart();
 
         imu.resetYaw();
 
 
 
 
+        sleep(200);
+
+        imu.resetYaw();
+        sleep(500);
+        clawL.setPosition(0.5);
+        clawR.setPosition(0.5);
+        slides(0.4,10,0.5);
+        uppiesJointL.setPosition(0.07);
+        uppiesJointR.setPosition(0.07);
+        driveStraight(0.4, 30, 0);
+        slides(0.4,-20,3.0);
+
+
+        sleep(300);
 
 
 
@@ -164,32 +261,78 @@ public class supersigmaauto extends LinearOpMode {
 
         //Manages Telemetry and stopping the stream
         while (opModeIsActive()) {
-
-            sleep(200);
-
-            imu.resetYaw();
-            sleep(500);
-            driveStraight(0.4, 10, 0);
-            sleep(300);
+            telemetry.addData(">", "Robot Heading = %4.0f", getHeading());
+            telemetry.update();
         }
 
         // Stop all motion;
-        fl.setPower(0);
-        fr.setPower(0);
-        bl.setPower(0);
-        br.setPower(0);
 
-        // Turn off RUN_TO_POSITION
-        fl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        br.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        sleep(250);   // optional pause after each move.
     }
 
 
+    public void slides(double speed,
+                          double slidesenco, double timeoutS) {
 
+        int newUppies;
+        int newUppies2;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+
+            newUppies = uppiesL.getCurrentPosition() + (int) (slidesenco * COUNTS_PER_INCH);
+            newUppies2 = uppiesR.getCurrentPosition() + (int) (slidesenco * COUNTS_PER_INCH);
+
+            uppiesL.setTargetPosition(newUppies);
+            uppiesR.setTargetPosition(newUppies2);
+
+            // Turn On RUN_TO_POSITION
+
+
+            uppiesL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            uppiesR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+
+            uppiesL.setPower(Math.abs(speed));
+            uppiesR.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (uppiesL.isBusy() && uppiesR.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Running to", "%7d: %7d", newUppies, newUppies2);
+                telemetry.addData("Currently at", " at %7d :%7d", newUppies, newUppies2,
+
+                        uppiesL.getCurrentPosition(),
+                        uppiesR.getCurrentPosition());
+                telemetry.update();
+            }
+
+
+            // Turn off RUN_TO_POSITION
+
+
+            uppiesL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            uppiesR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+            uppiesL.setPower(0);
+            uppiesR.setPower(0);
+
+            sleep(250);   // optional pause after each move.
+        }
+    }
 
 
 

@@ -155,7 +155,7 @@ public class FieldyWieldy extends LinearOpMode {
                 linkR.setPosition(0.5);
             } else {
                 linkL.setPosition(0.82);
-                linkR.setPosition(0.8);
+                linkR.setPosition(0.87);
             }
 
 
